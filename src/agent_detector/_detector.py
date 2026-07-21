@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 import os
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal, cast
+from typing import Literal, Optional, cast
 
 AgentConfidence = Literal["high", "medium", "low"]
 DetectionSource = Literal["environment", "path"]
@@ -59,7 +57,11 @@ class DetectionResult:
     signal: str
 
 
-def detect_agent(environ: Mapping[str, str] | None = None) -> DetectionResult | None:
+def detect_agent(
+    environ: Optional[Mapping[str, str]] = None,
+    *,
+    minimum_confidence: AgentConfidence = "low",
+) -> Optional[DetectionResult]:
     """Detect the AI coding agent driving the current process, if any.
 
     Detection is best-effort. A ``None`` result means "unattributed", not "human".
@@ -70,6 +72,12 @@ def detect_agent(environ: Mapping[str, str] | None = None) -> DetectionResult | 
 
     values = os.environ if environ is None else environ
 
+    if minimum_confidence not in ("high", "medium", "low"):
+        raise ValueError("minimum_confidence must be 'high', 'medium', or 'low'")
+
+    allow_medium = minimum_confidence in ("medium", "low")
+    allow_low = minimum_confidence == "low"
+
     # An explicit known identity is checked before inferred signals.
     explicit_agent = values.get("AI_AGENT", "")
     if explicit_agent in KNOWN_AGENTS:
@@ -78,7 +86,7 @@ def detect_agent(environ: Mapping[str, str] | None = None) -> DetectionResult | 
     # Amp sets CLAUDECODE too, so its more specific signals must win.
     if values.get("AGENT") == "amp":
         return DetectionResult("amp", "high", "environment", "AGENT")
-    if values.get("AMP_CURRENT_THREAD_ID"):
+    if allow_medium and values.get("AMP_CURRENT_THREAD_ID"):
         return DetectionResult("amp", "medium", "environment", "AMP_CURRENT_THREAD_ID")
 
     # OpenAI Codex CLI.
@@ -91,7 +99,7 @@ def detect_agent(environ: Mapping[str, str] | None = None) -> DetectionResult | 
         return DetectionResult("gemini-cli", "high", "environment", "GEMINI_CLI")
 
     # GitHub Copilot CLI. This signal is observed but not publicly documented.
-    if values.get("COPILOT_CLI"):
+    if allow_medium and values.get("COPILOT_CLI"):
         return DetectionResult("copilot-cli", "medium", "environment", "COPILOT_CLI")
 
     # OpenCode sets OPENCODE for the running agent. OPENCODE_CLIENT and
@@ -99,10 +107,10 @@ def detect_agent(environ: Mapping[str, str] | None = None) -> DetectionResult | 
     if values.get("OPENCODE"):
         return DetectionResult("opencode", "high", "environment", "OPENCODE")
 
-    if values.get("ANTIGRAVITY_AGENT"):
+    if allow_medium and values.get("ANTIGRAVITY_AGENT"):
         return DetectionResult("antigravity", "medium", "environment", "ANTIGRAVITY_AGENT")
 
-    if values.get("AUGMENT_AGENT"):
+    if allow_medium and values.get("AUGMENT_AGENT"):
         return DetectionResult("augment-cli", "medium", "environment", "AUGMENT_AGENT")
 
     # Cowork and Claude Code share ambient Claude markers. Check Cowork first.
@@ -116,32 +124,32 @@ def detect_agent(environ: Mapping[str, str] | None = None) -> DetectionResult | 
     # These can also exist in Claude's integrated terminal, so they carry less
     # confidence than the child-session signal.
     for signal in ("CLAUDECODE", "CLAUDE_CODE"):
-        if values.get(signal):
+        if allow_medium and values.get(signal):
             return DetectionResult("claude-code", "medium", "environment", signal)
 
     # Cursor IDE and Cursor CLI are distinguishable when both signals exist.
-    if values.get("CURSOR_TRACE_ID"):
+    if allow_medium and values.get("CURSOR_TRACE_ID"):
         return DetectionResult("cursor", "medium", "environment", "CURSOR_TRACE_ID")
 
     if values.get("CURSOR_AGENT"):
         return DetectionResult("cursor-cli", "high", "environment", "CURSOR_AGENT")
 
-    if values.get("CURSOR_EXTENSION_HOST_ROLE") == "agent-exec":
+    if allow_medium and values.get("CURSOR_EXTENSION_HOST_ROLE") == "agent-exec":
         return DetectionResult("cursor-cli", "medium", "environment", "CURSOR_EXTENSION_HOST_ROLE")
 
     # The following signals are broader or have less first-party evidence, so
     # they are checked only after the more specific agent signals above.
-    if values.get("TERM_PROGRAM") == "kiro":
+    if allow_low and values.get("TERM_PROGRAM") == "kiro":
         return DetectionResult("kiro", "low", "environment", "TERM_PROGRAM")
 
     path = values.get("PATH", "")
-    if _PI_AGENT_PATH.search(path):
+    if allow_medium and _PI_AGENT_PATH.search(path):
         return DetectionResult("pi", "medium", "path", "PATH")
 
-    if values.get("REPL_ID"):
+    if allow_low and values.get("REPL_ID"):
         return DetectionResult("replit", "low", "environment", "REPL_ID")
 
-    if values.get("GOOSE_PROVIDER"):
+    if allow_low and values.get("GOOSE_PROVIDER"):
         return DetectionResult("goose", "low", "environment", "GOOSE_PROVIDER")
 
     return None

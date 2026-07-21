@@ -5,6 +5,7 @@ on:
     types: [synchronize, reopened, opened, ready_for_review]
     branches: [main]
     paths:
+      - "RELEASE.md"
       - "src/agent_detector/**"
       - "pyproject.toml"
 
@@ -34,5 +35,5 @@ jobs:
         uses: autopub/autopub-action@5fdc82e84c048a82303de6b5c5a9d027665e73cf # v1.1.1
         with:
           command: check
-          autopub-version: "1.0.0a58"
+          autopub-version: "1.0.0a60"
           fail-on-missing: "true"

@@ -132,6 +132,43 @@ def test_unknown_explicit_agent_falls_through() -> None:
     assert detection == DetectionResult("gemini-cli", "high", "environment", "GEMINI_CLI")
 
 
+def test_minimum_confidence_high_returns_high_confidence_detection() -> None:
+    detection = detect_agent({"CODEX_CI": "1"}, minimum_confidence="high")
+
+    assert detection == DetectionResult("codex", "high", "environment", "CODEX_CI")
+
+
+def test_minimum_confidence_high_ignores_medium_confidence_detection() -> None:
+    assert detect_agent({"AMP_CURRENT_THREAD_ID": "secret"}, minimum_confidence="high") is None
+
+
+def test_minimum_confidence_medium_returns_medium_confidence_detection() -> None:
+    detection = detect_agent({"AMP_CURRENT_THREAD_ID": "secret"}, minimum_confidence="medium")
+
+    assert detection == DetectionResult("amp", "medium", "environment", "AMP_CURRENT_THREAD_ID")
+
+
+def test_minimum_confidence_medium_ignores_low_confidence_detection() -> None:
+    assert detect_agent({"GOOSE_PROVIDER": "anthropic"}, minimum_confidence="medium") is None
+
+
+def test_minimum_confidence_skips_weaker_signal_for_stronger_signal() -> None:
+    detection = detect_agent(
+        {"AMP_CURRENT_THREAD_ID": "secret", "CODEX_CI": "1"},
+        minimum_confidence="high",
+    )
+
+    assert detection == DetectionResult("codex", "high", "environment", "CODEX_CI")
+
+
+def test_invalid_minimum_confidence_is_rejected() -> None:
+    with pytest.raises(
+        ValueError,
+        match="minimum_confidence must be 'high', 'medium', or 'low'",
+    ):
+        detect_agent({}, minimum_confidence="invalid")  # type: ignore[arg-type]
+
+
 def test_amp_takes_priority_over_claude_code() -> None:
     detection = detect_agent({"AGENT": "amp", "CLAUDECODE": "1"})
 
