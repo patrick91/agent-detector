@@ -1,0 +1,75 @@
+[project]
+name = "agent-detector"
+version = "0.1.0"
+description = "Detect AI coding agents from their execution environment"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [{ name = "Patrick Arminio" }]
+dependencies = []
+keywords = ["agent", "ai", "cli", "codex", "claude", "telemetry"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = "https://github.com/patrick91/agent-detector"
+Repository = "https://github.com/patrick91/agent-detector"
+Issues = "https://github.com/patrick91/agent-detector/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+]
+lint = [
+    "mypy>=1.17.1,<2",
+    "ruff>=0.12.4",
+]
+
+[tool.ruff]
+fix = true
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "UP", "W"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=agent_detector --cov-report=term-missing"
+testpaths = ["tests"]
+xfail_strict = true
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = true
+
+[tool.mypy]
+python_version = "3.9"
+files = ["src"]
+strict = true
+
+[tool.autopub]
+git-username = "github-actions[bot]"
+git-email = "41898282+github-actions[bot]@users.noreply.github.com"
+plugins = ["autopub.plugins.github", "autopub.plugins.uv"]
