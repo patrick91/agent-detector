@@ -75,81 +75,97 @@ def detect_agent(
     if minimum_confidence not in ("high", "medium", "low"):
         raise ValueError("minimum_confidence must be 'high', 'medium', or 'low'")
 
-    allow_medium = minimum_confidence in ("medium", "low")
-    allow_low = minimum_confidence == "low"
+    confidence_order: tuple[AgentConfidence, ...] = ("high", "medium", "low")
+    minimum_confidence_index = confidence_order.index(minimum_confidence)
+    candidates: list[DetectionResult] = []
 
     # An explicit known identity is checked before inferred signals.
     explicit_agent = values.get("AI_AGENT", "")
     if explicit_agent in KNOWN_AGENTS:
-        return DetectionResult(cast(AgentName, explicit_agent), "high", "environment", "AI_AGENT")
+        candidates.append(
+            DetectionResult(cast(AgentName, explicit_agent), "high", "environment", "AI_AGENT")
+        )
 
     # Amp sets CLAUDECODE too, so its more specific signals must win.
     if values.get("AGENT") == "amp":
-        return DetectionResult("amp", "high", "environment", "AGENT")
-    if allow_medium and values.get("AMP_CURRENT_THREAD_ID"):
-        return DetectionResult("amp", "medium", "environment", "AMP_CURRENT_THREAD_ID")
+        candidates.append(DetectionResult("amp", "high", "environment", "AGENT"))
+    if values.get("AMP_CURRENT_THREAD_ID"):
+        candidates.append(DetectionResult("amp", "medium", "environment", "AMP_CURRENT_THREAD_ID"))
 
     # OpenAI Codex CLI.
     for signal in ("CODEX_THREAD_ID", "CODEX_CI", "CODEX_SANDBOX"):
         if values.get(signal):
-            return DetectionResult("codex", "high", "environment", signal)
+            candidates.append(DetectionResult("codex", "high", "environment", signal))
 
     # Google Gemini CLI.
     if values.get("GEMINI_CLI"):
-        return DetectionResult("gemini-cli", "high", "environment", "GEMINI_CLI")
+        candidates.append(DetectionResult("gemini-cli", "high", "environment", "GEMINI_CLI"))
 
     # GitHub Copilot CLI. This signal is observed but not publicly documented.
-    if allow_medium and values.get("COPILOT_CLI"):
-        return DetectionResult("copilot-cli", "medium", "environment", "COPILOT_CLI")
+    if values.get("COPILOT_CLI"):
+        candidates.append(DetectionResult("copilot-cli", "medium", "environment", "COPILOT_CLI"))
 
     # OpenCode sets OPENCODE for the running agent. OPENCODE_CLIENT and
     # OPENCODE_CALLER identify its launcher, so they are intentionally ignored.
     if values.get("OPENCODE"):
-        return DetectionResult("opencode", "high", "environment", "OPENCODE")
+        candidates.append(DetectionResult("opencode", "high", "environment", "OPENCODE"))
 
-    if allow_medium and values.get("ANTIGRAVITY_AGENT"):
-        return DetectionResult("antigravity", "medium", "environment", "ANTIGRAVITY_AGENT")
+    if values.get("ANTIGRAVITY_AGENT"):
+        candidates.append(
+            DetectionResult("antigravity", "medium", "environment", "ANTIGRAVITY_AGENT")
+        )
 
-    if allow_medium and values.get("AUGMENT_AGENT"):
-        return DetectionResult("augment-cli", "medium", "environment", "AUGMENT_AGENT")
+    if values.get("AUGMENT_AGENT"):
+        candidates.append(DetectionResult("augment-cli", "medium", "environment", "AUGMENT_AGENT"))
 
     # Cowork and Claude Code share ambient Claude markers. Check Cowork first.
     if values.get("CLAUDE_CODE_IS_COWORK"):
-        return DetectionResult("cowork", "high", "environment", "CLAUDE_CODE_IS_COWORK")
+        candidates.append(DetectionResult("cowork", "high", "environment", "CLAUDE_CODE_IS_COWORK"))
 
     # This specifically marks commands spawned by Claude Code.
     if values.get("CLAUDE_CODE_CHILD_SESSION"):
-        return DetectionResult("claude-code", "high", "environment", "CLAUDE_CODE_CHILD_SESSION")
+        candidates.append(
+            DetectionResult("claude-code", "high", "environment", "CLAUDE_CODE_CHILD_SESSION")
+        )
 
     # These can also exist in Claude's integrated terminal, so they carry less
     # confidence than the child-session signal.
     for signal in ("CLAUDECODE", "CLAUDE_CODE"):
-        if allow_medium and values.get(signal):
-            return DetectionResult("claude-code", "medium", "environment", signal)
+        if values.get(signal):
+            candidates.append(DetectionResult("claude-code", "medium", "environment", signal))
 
     # Cursor IDE and Cursor CLI are distinguishable when both signals exist.
-    if allow_medium and values.get("CURSOR_TRACE_ID"):
-        return DetectionResult("cursor", "medium", "environment", "CURSOR_TRACE_ID")
+    if values.get("CURSOR_TRACE_ID"):
+        candidates.append(DetectionResult("cursor", "medium", "environment", "CURSOR_TRACE_ID"))
 
     if values.get("CURSOR_AGENT"):
-        return DetectionResult("cursor-cli", "high", "environment", "CURSOR_AGENT")
+        candidates.append(DetectionResult("cursor-cli", "high", "environment", "CURSOR_AGENT"))
 
-    if allow_medium and values.get("CURSOR_EXTENSION_HOST_ROLE") == "agent-exec":
-        return DetectionResult("cursor-cli", "medium", "environment", "CURSOR_EXTENSION_HOST_ROLE")
+    if values.get("CURSOR_EXTENSION_HOST_ROLE") == "agent-exec":
+        candidates.append(
+            DetectionResult("cursor-cli", "medium", "environment", "CURSOR_EXTENSION_HOST_ROLE")
+        )
 
     # The following signals are broader or have less first-party evidence, so
     # they are checked only after the more specific agent signals above.
-    if allow_low and values.get("TERM_PROGRAM") == "kiro":
-        return DetectionResult("kiro", "low", "environment", "TERM_PROGRAM")
+    if values.get("TERM_PROGRAM") == "kiro":
+        candidates.append(DetectionResult("kiro", "low", "environment", "TERM_PROGRAM"))
 
     path = values.get("PATH", "")
-    if allow_medium and _PI_AGENT_PATH.search(path):
-        return DetectionResult("pi", "medium", "path", "PATH")
+    if _PI_AGENT_PATH.search(path):
+        candidates.append(DetectionResult("pi", "medium", "path", "PATH"))
 
-    if allow_low and values.get("REPL_ID"):
-        return DetectionResult("replit", "low", "environment", "REPL_ID")
+    if values.get("REPL_ID"):
+        candidates.append(DetectionResult("replit", "low", "environment", "REPL_ID"))
 
-    if allow_low and values.get("GOOSE_PROVIDER"):
-        return DetectionResult("goose", "low", "environment", "GOOSE_PROVIDER")
+    if values.get("GOOSE_PROVIDER"):
+        candidates.append(DetectionResult("goose", "low", "environment", "GOOSE_PROVIDER"))
 
-    return None
+    return next(
+        (
+            candidate
+            for candidate in candidates
+            if confidence_order.index(candidate.confidence) <= minimum_confidence_index
+        ),
+        None,
+    )
