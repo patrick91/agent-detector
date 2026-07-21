@@ -38,6 +38,15 @@ Pass a mapping to make detection deterministic in tests:
 assert detect_agent({"OPENCODE": "1"}).agent == "opencode"
 ```
 
+Require a minimum confidence when broad environmental hints are not useful:
+
+```python
+detection = detect_agent(minimum_confidence="high")
+```
+
+`minimum_confidence` is typed as `Literal["high", "medium", "low"]` and
+defaults to `"low"`.
+
 ## Supported agents
 
 | Agent | Signals | Confidence |

@@ -38,3 +38,7 @@ def test_known_agents_are_stable() -> None:
 
 def test_known_agents_match_literal_values() -> None:
     assert agent_detector.KNOWN_AGENTS == frozenset(get_args(agent_detector.AgentName))
+
+
+def test_confidence_literal_values() -> None:
+    assert get_args(agent_detector.AgentConfidence) == ("high", "medium", "low")
