@@ -6,6 +6,7 @@ from agent_detector._detector import (
     DetectionSource,
     detect_agent,
 )
+from agent_detector._user_agent import parse_invoking_agent
 
 __all__ = [
     "KNOWN_AGENTS",
@@ -14,4 +15,5 @@ __all__ = [
     "DetectionResult",
     "DetectionSource",
     "detect_agent",
+    "parse_invoking_agent",
 ]

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Literal, Optional, cast
 
 AgentConfidence = Literal["high", "medium", "low"]
-DetectionSource = Literal["environment", "path"]
+DetectionSource = Literal["environment", "path", "user-agent"]
 AgentName = Literal[
     "amp",
     "antigravity",
@@ -49,7 +49,7 @@ _PI_AGENT_PATH = re.compile(r"(?:^|[\\/])\.pi[\\/]agent(?:[\\/]|$)")
 
 @dataclass(frozen=True)
 class DetectionResult:
-    """Evidence that an AI coding agent is driving the current process."""
+    """Evidence that an AI coding agent is driving the current process or request."""
 
     agent: AgentName
     confidence: AgentConfidence

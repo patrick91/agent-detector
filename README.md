@@ -1,7 +1,8 @@
 # Agent Detector
 
 `agent-detector` is a small, dependency-free Python package for detecting which
-AI coding agent is driving the current process.
+AI coding agent is driving the current process, and for parsing that identity
+back out of a `User-Agent` header on the receiving side.
 
 It returns evidence rather than only a boolean, so callers can distinguish an
 explicit identity from a broad environmental hint.
@@ -29,7 +30,7 @@ The returned `DetectionResult` contains:
 
 - `agent`: an `AgentName` literal containing a supported agent name
 - `confidence`: `high`, `medium`, or `low`
-- `source`: `environment` or `path`
+- `source`: `environment`, `path`, or `user-agent`
 - `signal`: the name of the matched signal, never its value
 
 Pass a mapping to make detection deterministic in tests:
@@ -46,6 +47,64 @@ detection = detect_agent(minimum_confidence="high")
 
 `minimum_confidence` is typed as `Literal["high", "medium", "low"]` and
 defaults to `"low"`.
+
+## User-Agent propagation
+
+A client can propagate a detected identity to a server as a second `User-Agent`
+product. The value must be exactly two whitespace-separated products:
+
+```text
+<product>/<version> AI-Agent/<agent>
+```
+
+For example:
+
+```text
+example-cli/1.2.3 AI-Agent/codex
+```
+
+The rules are strict and case-sensitive:
+
+- `product` and `version` are both required and must be non-empty
+  [RFC 9110 tokens](https://www.rfc-editor.org/rfc/rfc9110#name-tokens)
+  (letters, digits, and ``!#$%&'*+-.^_`|~``; no `/`, spaces, or parentheses)
+- the marker must be exactly `AI-Agent` (mirroring the `AI_AGENT` environment
+  variable)
+- `agent` must be one of the supported agent names below, in lowercase
+- comments such as `(darwin)` and additional products are rejected
+- leading and trailing whitespace is ignored
+
+A client can build the value like this:
+
+```python
+from agent_detector import detect_agent
+
+user_agent = "example-cli/1.2.3"
+if detection := detect_agent(minimum_confidence="high"):
+    user_agent += f" AI-Agent/{detection.agent}"
+```
+
+Use `parse_invoking_agent` on the receiving side. It returns a
+`DetectionResult` with `confidence="high"`, `source="user-agent"`, and
+`signal="User-Agent"`, or `None` when the value does not match:
+
+```python
+from agent_detector import parse_invoking_agent
+
+detection = parse_invoking_agent(
+    request.headers.get("user-agent"),
+    expected_product="example-cli",
+)
+
+if detection:
+    print(detection.agent)  # "codex"
+```
+
+`expected_product` is optional. When given, it must be a non-empty string and
+only values whose `product` matches it exactly are accepted; anything else
+returns `None`. Use it to ignore unrelated clients that happen to send a
+similar header. It is a filter, not authentication: as with environment
+detection, the identity is informational and any HTTP client can send it.
 
 ## Supported agents
 
@@ -84,10 +143,15 @@ This package detects the execution harness. It cannot determine whether a
 particular skill, plugin, prompt, or model caused the command. Use a separate
 explicit marker when that attribution matters.
 
+Neither environment detection nor the `User-Agent` format verifies the caller.
+Do not use a detected identity to grant access or bypass checks.
+
 ## Privacy
 
 Environment values such as thread IDs are never returned. A result contains
 only a normalized agent name and the name and category of the matched signal.
+`parse_invoking_agent` likewise returns only the agent name, never the client
+product, version, or the raw header.
 
 ## Development
 

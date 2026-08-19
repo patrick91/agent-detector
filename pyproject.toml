@@ -1,7 +1,7 @@
 [project]
 name = "agent-detector"
 version = "1.0.0"
-description = "Detect AI coding agents from their execution environment"
+description = "Detect AI coding agents from their execution environment or User-Agent"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.9"
