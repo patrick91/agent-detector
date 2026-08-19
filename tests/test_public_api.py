@@ -11,6 +11,7 @@ def test_public_api() -> None:
         "DetectionResult",
         "DetectionSource",
         "detect_agent",
+        "parse_invoking_agent",
     ]
 
 
