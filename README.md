@@ -122,6 +122,7 @@ detection, the identity is informational and any HTTP client can send it.
 | Claude Code | `CLAUDE_CODE_CHILD_SESSION`, `CLAUDECODE`, `CLAUDE_CODE` | high / medium |
 | Cursor | `CURSOR_TRACE_ID` | medium |
 | Cursor CLI | `CURSOR_AGENT`, `CURSOR_EXTENSION_HOST_ROLE=agent-exec` | high / medium |
+| Grok | `GROK_SESSION_ID`, `GROK_AGENT` | high / medium |
 | Grok Bot | `CURSOR_AGENT` + `SAND_BOX_BOOT_ID` + `SAND_BOX_STORE_ID` (all required) | high |
 | Kiro | `TERM_PROGRAM=kiro` | low |
 | Pi | `.pi/agent` entry in `PATH` | medium |
