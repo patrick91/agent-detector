@@ -1,3 +1,10 @@
+2.0.0 - 2026-09-02
+------------------
+
+This release adds a cli command to the project, so you can run `uvx agent-detector`
+
+This release was contributed by [@patrick91](https://github.com/patrick91) in [#7](https://github.com/patrick91/agent-detector/pull/7)
+
 1.1.2 - 2026-09-02
 ------------------
 
