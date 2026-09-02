@@ -1,3 +1,10 @@
+1.1.2 - 2026-09-02
+------------------
+
+This release adds support for detecting Grok Build
+
+This release was contributed by [@patrick91](https://github.com/patrick91) in [#6](https://github.com/patrick91/agent-detector/pull/6)
+
 1.1.1 - 2026-09-02
 ------------------
 

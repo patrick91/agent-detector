@@ -1,6 +1,6 @@
 [project]
 name = "agent-detector"
-version = "1.1.1"
+version = "1.1.2"
 description = "Detect AI coding agents from their execution environment or User-Agent"
 readme = "README.md"
 license = "MIT"
