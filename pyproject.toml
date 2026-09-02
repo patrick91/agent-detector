@@ -23,6 +23,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
+[project.scripts]
+agent-detector = "agent_detector._cli:main"
+
 [project.urls]
 Homepage = "https://github.com/patrick91/agent-detector"
 Repository = "https://github.com/patrick91/agent-detector"
@@ -58,6 +61,7 @@ filterwarnings = ["error"]
 
 [tool.coverage.run]
 branch = true
+omit = ["src/agent_detector/__main__.py"]
 
 [tool.coverage.report]
 fail_under = 100
