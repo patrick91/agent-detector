@@ -122,6 +122,7 @@ detection, the identity is informational and any HTTP client can send it.
 | Claude Code | `CLAUDE_CODE_CHILD_SESSION`, `CLAUDECODE`, `CLAUDE_CODE` | high / medium |
 | Cursor | `CURSOR_TRACE_ID` | medium |
 | Cursor CLI | `CURSOR_AGENT`, `CURSOR_EXTENSION_HOST_ROLE=agent-exec` | high / medium |
+| Grok Bot | `CURSOR_AGENT` + `SAND_BOX_BOOT_ID` + `SAND_BOX_STORE_ID` (all required) | high |
 | Kiro | `TERM_PROGRAM=kiro` | low |
 | Pi | `.pi/agent` entry in `PATH` | medium |
 | Replit | `REPL_ID` | low |
@@ -131,7 +132,8 @@ detection, the identity is informational and any HTTP client can send it.
 supported agent names. Unknown values are ignored.
 
 The detector is deliberately ordered. For example, Amp is checked before
-Claude Code because Amp also sets `CLAUDECODE`.
+Claude Code because Amp also sets `CLAUDECODE`, and Grok Bot is checked before
+Cursor CLI because it also sets `CURSOR_AGENT`.
 
 ## Important limitations
 
