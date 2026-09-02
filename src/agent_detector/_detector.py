@@ -18,6 +18,7 @@ AgentName = Literal[
     "cursor-cli",
     "gemini-cli",
     "goose",
+    "grok-bot",
     "kiro",
     "opencode",
     "pi",
@@ -37,6 +38,7 @@ KNOWN_AGENTS: frozenset[AgentName] = frozenset(
         "cursor-cli",
         "gemini-cli",
         "goose",
+        "grok-bot",
         "kiro",
         "opencode",
         "pi",
@@ -133,6 +135,15 @@ def detect_agent(
     for signal in ("CLAUDECODE", "CLAUDE_CODE"):
         if values.get(signal):
             candidates.append(DetectionResult("claude-code", "medium", "environment", signal))
+
+    # Grok Bot runs through Cursor and also sets CURSOR_AGENT. Its observed,
+    # undocumented Sand computer IDs distinguish it from Cursor CLI.
+    if (
+        values.get("CURSOR_AGENT")
+        and values.get("SAND_BOX_BOOT_ID")
+        and values.get("SAND_BOX_STORE_ID")
+    ):
+        candidates.append(DetectionResult("grok-bot", "high", "environment", "SAND_BOX_BOOT_ID"))
 
     # Cursor IDE and Cursor CLI are distinguishable when both signals exist.
     if values.get("CURSOR_TRACE_ID"):
