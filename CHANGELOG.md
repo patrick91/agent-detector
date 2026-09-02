@@ -1,3 +1,10 @@
+1.1.1 - 2026-09-02
+------------------
+
+This release add support for detecting Grok Bot
+
+This release was contributed by [@patrick91](https://github.com/patrick91) in [#4](https://github.com/patrick91/agent-detector/pull/4)
+
 1.1.0 - 2026-08-19
 ------------------
 
